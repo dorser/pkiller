@@ -1,0 +1,22 @@
+name: pkiller
+description: Sends a SIGKILL signal to a specific process.
+homepageURL: https://github.com/dorser/pkiller
+documentationURL: https://github.com/dorser/pkiller
+sourceURL: https://github.com/dorser/pkiller
+datasources:
+  pkiller:
+    fields:
+      complete:
+        annotations:
+          description: True if the signal was sent successfully
+params:
+  ebpf:
+    min_start_time_ns:
+      key: min_start_time_ns
+      defaultValue: "0"
+      description: 'Optional: The start time (ns) of the process from /proc/[pid]/stat
+        (field 22) to prevent killing recycled PIDs.'
+    pid_to_kill:
+      key: pid_to_kill
+      defaultValue: ""
+      description: The HOST PID of the process to kill.
