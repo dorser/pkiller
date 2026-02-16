@@ -42,27 +42,28 @@ static __always_inline int kill_process(void *ctx) {
 
   /*
    * Verify start time to prevent killing a recycled PID.
-   * If min_start_time_ns is set, we ensure the victim is not older (or different)
-   * than the process we targeted in userspace.
+   * If min_start_time_ns is set, we ensure the victim is not older (or
+   * different) than the process we targeted in userspace.
    */
   if (min_start_time_ns != 0) {
     struct task_struct *task = (struct task_struct *)bpf_get_current_task();
     __u64 start_time = BPF_CORE_READ(task, start_time);
-    
-    // In some kernel versions/configs this might be slightly off due to boot time nuances,
-    // so we usually check if the process started *after* our detailed knowledge,
-    // or we can expect exact match if we trust /proc/pid/stat precision.
-    // For this PoC, Strict Equality is safest for identity.
+
+    // In some kernel versions/configs this might be slightly off due to boot
+    // time nuances, so we usually check if the process started *after* our
+    // detailed knowledge, or we can expect exact match if we trust
+    // /proc/pid/stat precision. For this PoC, Strict Equality is safest for
+    // identity.
     if (start_time != min_start_time_ns) {
-        return 0;
+      return 0;
     }
   }
-  
+
   // Try to send signal to the thread group (process)
   long ret = bpf_send_signal(SIGKILL);
   if (ret != 0) {
-      // Fallback: send to the specific thread if process-wide signaling fails
-      bpf_send_signal_thread(SIGKILL);
+    // Fallback: send to the specific thread if process-wide signaling fails
+    bpf_send_signal_thread(SIGKILL);
   }
 
   // Mark as seen
@@ -79,13 +80,9 @@ static __always_inline int kill_process(void *ctx) {
 }
 
 SEC("tracepoint/sched/sched_switch")
-int tracepoint__sched_switch(void *ctx) {
-  return kill_process(ctx);
-}
+int tracepoint__sched_switch(void *ctx) { return kill_process(ctx); }
 
 SEC("raw_tracepoint/sys_enter")
-int tracepoint__sys_enter(void *ctx) {
-  return kill_process(ctx);
-}
+int tracepoint__sys_enter(void *ctx) { return kill_process(ctx); }
 
 char LICENSE[] SEC("license") = "GPL";
